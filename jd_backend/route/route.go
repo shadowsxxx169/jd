@@ -8,6 +8,7 @@ import (
 
 	"jd/controller"
 	"jd/service"
+	"jd/service/chess"
 
 	"jd/middleware"
 )
@@ -17,7 +18,7 @@ func SetupRouter() *gin.Engine {
 
 	origin := os.Getenv("FRONTEND_URL")
 	if origin == "" {
-		origin = "http://localhost:5173" // 变成前端实际端口
+		origin = "http://localhost:5173"
 	}
 
 	// 设置跨域请求
@@ -33,6 +34,11 @@ func SetupRouter() *gin.Engine {
 	user := controller.NewUserController(service.NewUserService())
 	media := controller.NewMediaController(service.NewMediaService())
 	post := controller.NewPostController(service.NewPostService())
+
+	// 象棋 WebSocket 路由（全局共享一个房间管理器）
+	chessCtrl := controller.NewChessController(chess.NewManager())
+	r.GET("/ws/chess", chessCtrl.HandleWS)
+
 	// 设置路由组
 	api := r.Group("/api")
 	api.POST("/info", user.GetUserInfo)
