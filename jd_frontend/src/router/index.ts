@@ -4,6 +4,15 @@ import apiBus from '@/utils/apiBus'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // 象棋模块
+    {
+      path: '/chess',
+      component: () => import('@/views/chess/LobbyView.vue'),
+    },
+    {
+      path: '/chess/game',
+      component: () => import('@/views/chess/GameView.vue'),
+    },
     {
       path: '/',
       name: 'default',
@@ -41,7 +50,7 @@ const router = createRouter({
 })
 
 // 路由守卫，验证用户是否登录
-router.beforeEach((to, from, next) => {
+router.beforeEach((_to, _from, next) => {
   // if (to.meta.requiresAuth && !localStorage.getItem('token')) {
   //   next('/login')
   // } else {
