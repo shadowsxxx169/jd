@@ -1,0 +1,64 @@
+name: 部署中国象棋前端到 GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # 支持手动触发
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同时只允许一个部署任务运行
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: jd_frontend/pnpm-lock.yaml
+
+      - name: 安装依赖
+        working-directory: jd_frontend
+        run: pnpm install
+
+      - name: 构建前端
+        working-directory: jd_frontend
+        env:
+          # 后端 WebSocket 地址，在 GitHub Secrets 中配置
+          VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+          # GitHub Pages 子路径（若仓库名不是用户名同名仓库则需要设置）
+          VITE_BASE_URL: ${{ vars.VITE_BASE_URL || '/' }}
+        run: pnpm build-only
+
+      - name: 上传构建产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: jd_frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
